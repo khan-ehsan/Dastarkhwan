@@ -55,6 +55,13 @@ document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('cli
 }));
 
 // ---------- this week ----------
+// Days without cooking. They show on the week but add nothing to the shopping list.
+const SPECIALS = {
+  __out: { name: 'Eating out', icon: '🍴' },
+  __takeaway: { name: 'Takeaway', icon: '🥡' },
+  __leftovers: { name: 'Leftovers', icon: '♻️' },
+};
+
 function renderWeek() {
   const dates = weekDates();
   $('#weekLabel').textContent = `Week of ${fmt(dates[0])} – ${fmt(dates[6])}`;
@@ -67,12 +74,14 @@ function renderWeek() {
   ));
   let prevCuisine = null;
   dates.forEach((d, i) => {
-    const r = recipeById(state.plan[iso(d)]);
+    const id = state.plan[iso(d)];
+    const sp = SPECIALS[id];
+    const r = sp ? null : recipeById(id);
     const repeat = r && prevCuisine === r.cuisine;
     prevCuisine = r ? r.cuisine : null;
-    sec.append(el('button', { class: 'day' + (r ? '' : ' empty'), onclick: () => openPicker(d) },
+    sec.append(el('button', { class: 'day' + (r || sp ? '' : ' empty') + (sp ? ' special' : ''), onclick: () => openPicker(d) },
       el('span', { class: 'dname' }, DAYS[i], el('small', {}, fmt(d))),
-      el('span', { class: 'dish' }, r ? r.name : 'Tap to choose dinner'),
+      el('span', { class: 'dish' }, sp ? `${sp.icon} ${sp.name}` : r ? r.name : 'Tap to choose dinner'),
       r ? el('span', { class: 'tag' }, r.cuisine) : null,
       repeat ? el('span', { class: 'warn', title: 'Same cuisine as the day before' }, 'same cuisine twice') : null,
     ));
@@ -85,16 +94,26 @@ function renderWeek() {
 let pickerDate = null;
 function openPicker(d) {
   pickerDate = d;
-  $('#pickerTitle').textContent = `Dinner for ${DAYS[(d.getDay() + 6) % 7]} ${fmt(d)}`;
+  const current = state.plan[iso(d)];
+  const curName = SPECIALS[current] ? SPECIALS[current].name : (recipeById(current) || {}).name;
+  $('#pickerTitle').textContent = `${curName ? 'Change' : 'Choose'} dinner for ${DAYS[(d.getDay() + 6) % 7]} ${fmt(d)}`;
   const list = $('#pickerList');
   list.replaceChildren();
+  if (curName) list.append(el('p', { class: 'current' }, 'Now planned: ', el('b', {}, curName), ' — tap another option to change it.'));
+  const choose = (id) => { state.plan[iso(pickerDate)] = id; save(); $('#picker').close(); render(); };
+  list.append(el('h3', {}, 'No cooking'));
+  const row = el('div', { class: 'special-row' });
+  Object.entries(SPECIALS).forEach(([id, sp]) => row.append(el('button', {
+    type: 'button', class: 'pick special-pick' + (id === current ? ' current-pick' : ''), onclick: () => choose(id),
+  }, `${sp.icon} ${sp.name}`)));
+  list.append(row);
   for (const c of CUISINES) {
     const rs = state.recipes.filter((r) => r.cuisine === c);
     if (!rs.length) continue;
     list.append(el('h3', {}, c));
-    rs.forEach((r) => list.append(el('button', { type: 'button', class: 'pick', onclick: () => {
-      state.plan[iso(pickerDate)] = r.id; save(); $('#picker').close(); render();
-    } }, r.name, el('small', {}, ` ${r.minutes} min`))));
+    rs.forEach((r) => list.append(el('button', {
+      type: 'button', class: 'pick' + (r.id === current ? ' current-pick' : ''), onclick: () => choose(r.id),
+    }, (r.id === current ? '✓ ' : '') + r.name, el('small', {}, ` ${r.minutes} min`))));
   }
   $('#picker').showModal();
 }

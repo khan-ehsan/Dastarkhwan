@@ -112,3 +112,10 @@ menu { display: flex; justify-content: space-between; padding: 0; margin: 12px 0
 .ing-row .i-pantry input { width: 18px; height: 18px; display: inline; }
 .ing-row .i-del { padding: 6px; }
 #addIng { margin-bottom: 12px; }
+
+/* change dinner, no-cooking days */
+.day.special .dish { font-style: italic; }
+.current { font-size: .9rem; background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; padding: 8px; margin: 0 0 6px; }
+.special-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.special-pick { text-align: center !important; padding: 10px 4px; font-size: .9rem; }
+.current-pick { border: 2px solid var(--brand) !important; font-weight: 600; }
