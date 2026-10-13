@@ -3,6 +3,7 @@
 
 const STORE_KEY = 'dastarkhwan-v1';
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const TYPE_ICON = { dessert: '🍮 ', drink: '🥤 ' };
 const SPECIALS = {
   __out: { name: 'Eating out', icon: '🍴' },
   __takeaway: { name: 'Takeaway', icon: '🥡' },
@@ -13,7 +14,7 @@ const SPECIALS = {
 function freshState() {
   return {
     recipes: JSON.parse(JSON.stringify(STARTER_RECIPES)), occasions: JSON.parse(JSON.stringify(STARTER_OCCASIONS)),
-    plan: {}, days: {}, extras: [], checked: {}, saleShop: {}, pantryNeed: {}, photos: {},
+    plan: {}, days: {}, extras: [], checked: {}, saleShop: {}, pantryNeed: {}, photos: {}, removed: [], dataVersion: 2,
     settings: { family: '', members: [], base: 4, lang: 'en', theme: 'auto' },
   };
 }
@@ -22,10 +23,13 @@ function loadState() {
   try { s = JSON.parse(localStorage.getItem(STORE_KEY)); } catch (e) { /* storage unavailable */ }
   const base = freshState();
   if (!s) return base;
+  const version = s.dataVersion || 1;
   // Upgrade older saved data: add new fields and new starter dishes without touching the family's edits.
   for (const k of Object.keys(base)) if (s[k] === undefined) s[k] = base[k];
   s.settings = Object.assign({}, base.settings, s.settings);
+  if (version < 2) moveToFamilyList(s);
   for (const r of STARTER_RECIPES) {
+    if (s.removed.includes(r.id)) continue; // the family deleted it: don't bring it back
     const mine = s.recipes.find((x) => x.id === r.id);
     if (!mine) { s.recipes.push(JSON.parse(JSON.stringify(r))); continue; }
     if (!mine.type) mine.type = r.type;
@@ -36,7 +40,28 @@ function loadState() {
     });
   }
   s.recipes.forEach((r) => { if (!r.type) r.type = 'main'; });
+  // Remove planned days, sides and menus that point to dishes no longer in the list.
+  const ids = new Set(s.recipes.map((r) => r.id));
+  for (const [day, id] of Object.entries(s.plan)) if (!ids.has(id) && !SPECIALS[id]) delete s.plan[day];
+  Object.values(s.days).forEach((i) => { i.sides = (i.sides || []).filter((x) => ids.has(x)); });
+  s.occasions = s.occasions.filter((o) => ids.has(o.main));
+  s.occasions.forEach((o) => { o.sides = o.sides.filter((x) => ids.has(x)); });
   return s;
+}
+
+// Version 2 (October 2026): the family's own "Dinner Ideas" list replaces the first starter dishes.
+// Dishes the family added themselves are kept and moved into the new groups.
+const FIRST_STARTERS = ['chicken-karahi', 'daal-chawal', 'chicken-biryani', 'aloo-gosht', 'butter-chicken', 'frikadeller', 'lasagne',
+  'spaghetti-bolognese', 'bulgogi', 'pho-bo', 'chicken-stir-fry', 'burgers', 'raita', 'kachumber', 'naan', 'plain-rice', 'agurkesalat', 'kheer', 'fruit-chaat'];
+const OLD_GROUPS = { Pakistani: 'Desi', Indian: 'Desi', Danish: 'Western', Italian: 'Western', Chinese: 'Asian', Korean: 'Asian', Vietnamese: 'Asian' };
+function moveToFamilyList(s) {
+  s.recipes = s.recipes.filter((r) => !FIRST_STARTERS.includes(r.id));
+  s.recipes.forEach((r) => { r.cuisine = OLD_GROUPS[r.cuisine] || (CUISINES.includes(r.cuisine) ? r.cuisine : 'Western'); });
+  s.recipes.unshift(...JSON.parse(JSON.stringify(STARTER_RECIPES)));
+  const starterMenus = STARTER_OCCASIONS.map((o) => o.id);
+  s.occasions = JSON.parse(JSON.stringify(STARTER_OCCASIONS)).concat(s.occasions.filter((o) => !starterMenus.includes(o.id)));
+  s.removed = [];
+  s.dataVersion = 2;
 }
 let state = loadState();
 function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { toast('Could not save on this phone'); } }
@@ -98,7 +123,7 @@ function toast(msg) { const n = $('#toast'); n.textContent = msg; n.classList.ad
 // The placeholder sits underneath, so it shows while a photo loads or if it cannot load.
 function picture(r, cls = 'thumb') {
   const src = r && (state.photos[r.id] || r.photo);
-  const [emoji, colour] = CUISINE_ART[(r && r.cuisine) || 'Pakistani'] || ['🍽️', '#7a2e1d'];
+  const [emoji, colour] = CUISINE_ART[(r && r.cuisine) || 'Desi'] || ['🍽️', '#7a2e1d'];
   const box = el('div', { class: cls + ' art', style: `background:${colour}` }, el('span', {}, emoji));
   if (src) {
     const img = el('img', { src, alt: r.name, loading: 'lazy' });
@@ -133,7 +158,8 @@ document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('cli
   render();
 }));
 let touchX = null;
-$('#tab-week').addEventListener('touchstart', (e) => { touchX = e.touches[0].clientX; }, { passive: true });
+// Swiping changes the week, except on the row of days, which scrolls sideways.
+$('#tab-week').addEventListener('touchstart', (e) => { touchX = e.target.closest('.week-strip') ? null : e.touches[0].clientX; }, { passive: true });
 $('#tab-week').addEventListener('touchend', (e) => {
   if (touchX == null) return;
   const dx = e.changedTouches[0].clientX - touchX; touchX = null;
@@ -148,14 +174,15 @@ function tonightCard() {
   const r = sp ? null : recipeById(id);
   const info = state.days[key] || {};
   const card = el('button', { class: 'tonight', onclick: () => openDay(new Date()) });
-  card.append(el('p', { class: 'tonight-label' }, `${t('tonight')} · ${dayName(new Date())}`));
-  if (!r && !sp) { card.append(el('p', { class: 'tonight-empty' }, t('nothing'))); return card; }
-  if (sp) { card.append(el('h2', {}, `${sp.icon} ${sp.name}`)); return card; }
-  card.append(el('div', { class: 'tonight-row' }, picture(r, 'tonight-pic'),
-    el('div', {},
-      el('h2', {}, r.name),
-      el('p', { class: 'meta' }, `${r.minutes} min · ${headcount(key)} eating`, cookText(info) ? ` · ${cookText(info)}` : ''),
-      (info.sides || []).length ? el('p', { class: 'meta' }, '+ ' + info.sides.map((s) => (recipeById(s) || {}).name).filter(Boolean).join(', ')) : null)));
+  const label = el('p', { class: 'tonight-label' }, `${t('tonight')} · ${dayName(new Date())}`);
+  if (!r && !sp) { card.append(label, el('p', { class: 'tonight-empty' }, t('nothing'))); return card; }
+  if (sp) { card.append(label, el('h2', {}, `${sp.icon} ${sp.name}`)); return card; }
+  // A wide banner: the dish photo across the card, with the details on top of it.
+  card.classList.add('banner');
+  card.append(picture(r, 'tonight-pic'), el('div', { class: 'tonight-text' }, label,
+    el('h2', {}, r.name),
+    el('p', { class: 'meta' }, `${r.minutes} min · ${headcount(key)} eating`, cookText(info) ? ` · ${cookText(info)}` : ''),
+    (info.sides || []).length ? el('p', { class: 'meta' }, '+ ' + info.sides.map((s) => (recipeById(s) || {}).name).filter(Boolean).join(', ')) : null));
   return card;
 }
 
@@ -179,6 +206,8 @@ function renderWeek() {
     el('button', { class: 'ghost', onclick: () => { weekStart.setDate(weekStart.getDate() + 7); render(); } }, '→'),
   ));
   let prevCuisine = null;
+  const strip = el('div', { class: 'week-strip' });
+  sec.append(strip);
   dates.forEach((d) => {
     const key = iso(d);
     const id = state.plan[key];
@@ -188,10 +217,10 @@ function renderWeek() {
     const repeat = r && prevCuisine === r.cuisine;
     prevCuisine = r ? r.cuisine : null;
     const away = (info.away || []).length, guests = info.guests || 0;
-    sec.append(el('button', { class: 'day' + (r || sp ? '' : ' empty') + (sp ? ' special' : '') + (key === todayIso() ? ' today' : ''), onclick: () => openDay(d) },
+    strip.append(el('button', { class: 'day' + (r || sp ? '' : ' empty') + (sp ? ' special' : '') + (key === todayIso() ? ' today' : ''), onclick: () => openDay(d) },
+      el('span', { class: 'dname' }, dayName(d).slice(0, 3), el('small', {}, ' ' + fmt(d))),
       r ? picture(r, 'day-pic') : el('div', { class: 'day-pic art blank' }, el('span', {}, sp ? sp.icon : '＋')),
       el('span', { class: 'day-main' },
-        el('span', { class: 'dname' }, dayName(d), el('small', {}, ' ' + fmt(d))),
         el('span', { class: 'dish' }, sp ? sp.name : r ? r.name : 'Tap to plan'),
         (info.sides || []).length ? el('small', { class: 'sides-line' }, '+ ' + info.sides.map((s) => (recipeById(s) || {}).name).filter(Boolean).join(', ')) : null,
         el('span', { class: 'chips-line' },
@@ -199,13 +228,16 @@ function renderWeek() {
           cookText(info) ? el('span', { class: 'pill' }, cookText(info)) : null,
           away ? el('span', { class: 'pill' }, `🚶 ${away} out`) : null,
           guests ? el('span', { class: 'pill' }, `➕ ${guests} guest${guests > 1 ? 's' : ''}`) : null,
-          repeat ? el('span', { class: 'warn' }, 'same cuisine twice') : null)),
+          repeat ? el('span', { class: 'warn' }, 'same cuisine')
+          : null)),
     ));
   });
+  // Start the row at today (or Monday for other weeks).
+  requestAnimationFrame(() => { const today = strip.querySelector('.today'); strip.scrollLeft = today ? today.offsetLeft - strip.offsetLeft - 8 : 0; });
   const planned = dates.map((d) => recipeById(state.plan[iso(d)])).filter((r) => r && r.type === 'main');
   const mix = [...new Set(planned.map((r) => r.cuisine))];
   if (mix.length) sec.append(el('p', { class: 'mix' }, 'This week\'s mix: ' + mix.map((c) => `${CUISINE_ART[c][0]} ${c}`).join(' · ')));
-  sec.append(el('p', { class: 'hint center' }, 'Tip: swipe left or right to change week.'));
+  sec.append(el('p', { class: 'hint center' }, 'Tip: swipe the days sideways; use the arrows to change week.'));
 }
 
 // ---------- day planner ----------
@@ -254,13 +286,18 @@ function renderDay() {
   }
 
   if (r) {
-    // Sides and dessert
-    body.append(el('h3', {}, t('sides')));
-    const sides = state.recipes.filter((x) => x.type !== 'main');
-    body.append(el('div', { class: 'chips' }, sides.map((x) => el('button', {
+    // Sides, drinks and dessert
+    const chip = (x) => el('button', {
       class: 'chip' + (info.sides.includes(x.id) ? ' on' : ''),
       onclick: () => set(() => { info.sides = info.sides.includes(x.id) ? info.sides.filter((s) => s !== x.id) : [...info.sides, x.id]; }),
-    }, (x.type === 'dessert' ? '🍮 ' : '') + x.name))));
+    }, (TYPE_ICON[x.type] || '') + x.name);
+    body.append(el('h3', {}, t('sides')));
+    body.append(el('div', { class: 'chips' }, state.recipes.filter((x) => x.type === 'side' || x.type === 'dessert').map(chip)));
+    const drinks = state.recipes.filter((x) => x.type === 'drink');
+    if (drinks.length) {
+      body.append(el('p', { class: 'hint' }, t('drinks')));
+      body.append(el('div', { class: 'chips' }, drinks.map(chip)));
+    }
   }
 
   // People
@@ -308,16 +345,16 @@ function renderRecipes() {
   sec.replaceChildren();
   sec.append(el('button', { class: 'wide add-btn', onclick: () => openEditor(null) }, '+ Add new dish'));
   const chips = el('div', { class: 'chips' });
-  ['All', 'Sides & desserts', ...CUISINES].forEach((c) => chips.append(el('button', {
+  ['All', ...CUISINES, 'Sides & drinks'].forEach((c) => chips.append(el('button', {
     class: 'chip' + (c === recipeFilter ? ' on' : ''), onclick: () => { recipeFilter = c; renderRecipes(); },
   }, c)));
   sec.append(chips);
-  const show = state.recipes.filter((r) => recipeFilter === 'All' || (recipeFilter === 'Sides & desserts' ? r.type !== 'main' : r.cuisine === recipeFilter && r.type === 'main'));
+  const show = state.recipes.filter((r) => recipeFilter === 'All' || (recipeFilter === 'Sides & drinks' ? r.type !== 'main' : r.cuisine === recipeFilter && r.type === 'main'));
   show.forEach((r) => {
     const cost = r.ingredients.reduce((a, g) => a + (g.price || 0), 0);
     sec.append(el('details', { class: 'recipe' },
       el('summary', {}, picture(r, 'mini'), el('span', { class: 'grow' }, r.name,
-        el('small', {}, ` ${r.type !== 'main' ? r.type + ' · ' : ''}${r.minutes} min${cost ? ' · ' + kr(cost) : ''}`)), el('span', { class: 'tag' }, r.cuisine)),
+        el('small', {}, ` ${r.minutes} min${cost ? ' · ' + kr(cost) : ''}`)), el('span', { class: 'tag' }, r.type === 'main' ? r.cuisine : r.type)),
       picture(r, 'hero'),
       r.note ? el('p', { class: 'note' }, '☪︎ ' + r.note) : null,
       el('ul', {}, r.ingredients.map((g) => el('li', {},
@@ -340,6 +377,7 @@ function renderRecipes() {
 function deleteRecipe(r) {
   if (!window.confirm(`Delete "${r.name}"? It will also be removed from any planned days.`)) return;
   state.recipes = state.recipes.filter((x) => x.id !== r.id);
+  if (!state.removed.includes(r.id)) state.removed.push(r.id);
   for (const [day, id] of Object.entries(state.plan)) if (id === r.id) delete state.plan[day];
   Object.values(state.days).forEach((i) => { i.sides = (i.sides || []).filter((s) => s !== r.id); });
   delete state.photos[r.id];

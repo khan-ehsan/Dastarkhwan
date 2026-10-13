@@ -11,154 +11,229 @@ const SHOPS = [
   { id: '365', name: '365discount', note: 'On offer' },
 ];
 
-const CUISINES = ['Pakistani', 'Indian', 'Danish', 'Western', 'Italian', 'Chinese', 'Korean', 'Vietnamese'];
+// The family's own dinner list, grouped as in their "Dinner Ideas" sheet: Desi, Rice, Western, Asian.
+const CUISINES = ['Desi', 'Rice', 'Western', 'Asian'];
 
 // Emoji and colour used when a dish has no photo yet.
 const CUISINE_ART = {
-  Pakistani: ['🍛', '#b5541c'], Indian: ['🥘', '#c2410c'], Danish: ['🥔', '#2f6b8a'], Western: ['🍔', '#7c4a2d'],
-  Italian: ['🍝', '#a33a2b'], Chinese: ['🥢', '#b8860b'], Korean: ['🍚', '#6b4fa3'], Vietnamese: ['🍜', '#2f7a5a'],
+  Desi: ['🍛', '#b5541c'], Rice: ['🍚', '#a8722a'], Western: ['🍔', '#7c4a2d'], Asian: ['🥢', '#2f7a5a'],
 };
 
 // Free stock photos from Unsplash (unsplash.com/license). Replace with your own in the app.
 const U = (id) => `https://images.unsplash.com/photo-${id}?w=640&q=70&auto=format&fit=crop`;
 
-// type: 'main', 'side' or 'dessert'. qty and price (rough, in kr) are for 4 people.
+// One ingredient: name, quantity, unit, shop, rough price in kr, and true if it is usually in the pantry.
+const I = (item, qty, unit, shop, price, pantry) => (pantry ? { item, qty, unit, shop, price, pantry: true } : { item, qty, unit, shop, price });
+
+// Ingredients used in many dishes.
+const ONIONS = I('Onions', 2, '', 'netto', 4);
+const TOMATOES = I('Tomatoes', 3, '', 'netto', 9);
+const GARLIC = I('Garlic', 1, 'bulb', 'netto', 5);
+const GG_PASTE = I('Ginger and garlic paste', 1, 'jar', 'bazar', 15, true);
+const CHILLIES = I('Green chillies', 4, '', 'bazar', 5);
+const CORIANDER = I('Fresh coriander', 1, 'bunch', 'bazar', 10);
+const YOGHURT = I('Plain yoghurt', 500, 'g', 'netto', 12);
+const RICE = I('Basmati rice', 750, 'g', 'bazar', 22, true);
+const WHOLE_SPICES = I('Whole spices (cumin, cloves, cardamom)', 1, 'pack', 'bazar', 10, true);
+const LAMB = I('Lamb or mutton (bone-in)', 1, 'kg', 'alakhwan', 110);
+const CHICKEN = I('Chicken (bone-in)', 1, 'kg', 'alakhwan', 65);
+const MINCE = I('Beef mince', 750, 'g', 'alakhwan', 70);
+const CHOPPED_TOM = I('Chopped tomatoes (tin)', 2, '', 'netto', 12);
+const CHEESE = I('Grated cheese', 200, 'g', 'netto', 20);
+
+// type: 'main', 'side', 'drink' or 'dessert'. Quantities and prices are for 4 people.
 // pantry: usually at home; only bought when the pantry check says it is needed.
 const STARTER_RECIPES = [
-  { id: 'chicken-karahi', name: 'Chicken karahi', cuisine: 'Pakistani', type: 'main', minutes: 45, ingredients: [
-    { item: 'Chicken (bone-in, karahi cut)', qty: 1, unit: 'kg', shop: 'alakhwan', price: 65 },
-    { item: 'Tomatoes', qty: 5, unit: '', shop: 'netto', price: 15 },
-    { item: 'Green chillies', qty: 4, unit: '', shop: 'bazar', price: 5 },
-    { item: 'Ginger', qty: 1, unit: 'piece', shop: 'netto', price: 6 },
-    { item: 'Garlic', qty: 1, unit: 'bulb', shop: 'netto', price: 5 },
-    { item: 'Fresh coriander', qty: 1, unit: 'bunch', shop: 'bazar', price: 10 },
-    { item: 'Karahi spice mix', qty: 1, unit: 'pack', shop: 'bazar', pantry: true, price: 15 },
-  ] },
-  { id: 'daal-chawal', name: 'Daal chawal', cuisine: 'Pakistani', type: 'main', minutes: 40, ingredients: [
-    { item: 'Red lentils (masoor)', qty: 500, unit: 'g', shop: 'bazar', pantry: true, price: 15 },
-    { item: 'Basmati rice', qty: 500, unit: 'g', shop: 'bazar', pantry: true, price: 15 },
-    { item: 'Onions', qty: 2, unit: '', shop: 'netto', price: 4 },
-    { item: 'Tomatoes', qty: 2, unit: '', shop: 'netto', price: 6 },
-    { item: 'Garlic', qty: 1, unit: 'bulb', shop: 'netto', price: 5 },
-  ] },
-  { id: 'chicken-biryani', name: 'Chicken biryani', cuisine: 'Pakistani', type: 'main', minutes: 90, photo: U('1631515243349-e0cb75fb8d3a'), ingredients: [
-    { item: 'Chicken (bone-in)', qty: 1, unit: 'kg', shop: 'alakhwan', price: 65 },
-    { item: 'Basmati rice', qty: 750, unit: 'g', shop: 'bazar', pantry: true, price: 22 },
-    { item: 'Biryani spice mix', qty: 1, unit: 'pack', shop: 'bazar', pantry: true, price: 15 },
-    { item: 'Onions', qty: 3, unit: '', shop: 'netto', price: 6 },
-    { item: 'Plain yoghurt', qty: 500, unit: 'g', shop: 'netto', price: 12 },
-    { item: 'Potatoes', qty: 4, unit: '', shop: 'netto', price: 8 },
-    { item: 'Fresh mint', qty: 1, unit: 'bunch', shop: 'bazar', price: 10 },
-  ] },
-  { id: 'aloo-gosht', name: 'Aloo gosht', cuisine: 'Pakistani', type: 'main', minutes: 90, ingredients: [
-    { item: 'Lamb or mutton (bone-in)', qty: 1, unit: 'kg', shop: 'alakhwan', price: 110 },
-    { item: 'Potatoes', qty: 5, unit: '', shop: 'netto', price: 10 },
-    { item: 'Onions', qty: 2, unit: '', shop: 'netto', price: 4 },
-    { item: 'Tomatoes', qty: 3, unit: '', shop: 'netto', price: 9 },
-  ] },
-  { id: 'butter-chicken', name: 'Butter chicken', cuisine: 'Indian', type: 'main', minutes: 50, ingredients: [
-    { item: 'Boneless chicken thighs', qty: 800, unit: 'g', shop: 'alakhwan', price: 75 },
-    { item: 'Chopped tomatoes (tin)', qty: 2, unit: '', shop: 'netto', price: 12 },
-    { item: 'Cream', qty: 250, unit: 'ml', shop: 'netto', price: 12 },
-    { item: 'Butter', qty: 1, unit: 'pack', shop: 'netto', price: 20 },
-    { item: 'Garam masala', qty: 1, unit: 'pack', shop: 'bazar', pantry: true, price: 12 },
-  ] },
-  { id: 'frikadeller', name: 'Halal frikadeller with potatoes', cuisine: 'Danish', type: 'main', minutes: 45,
-    note: 'Made with halal beef or lamb mince instead of the traditional pork.', ingredients: [
-    { item: 'Beef mince', qty: 750, unit: 'g', shop: 'alakhwan', price: 70 },
-    { item: 'Eggs', qty: 2, unit: '', shop: 'netto', price: 6 },
-    { item: 'Onions', qty: 1, unit: '', shop: 'netto', price: 2 },
-    { item: 'Milk', qty: 1, unit: 'l', shop: 'netto', price: 12 },
-    { item: 'New potatoes', qty: 1, unit: 'kg', shop: 'netto', price: 15 },
-  ] },
-  { id: 'lasagne', name: 'Beef lasagne', cuisine: 'Italian', type: 'main', minutes: 75,
-    note: 'Use stock instead of wine in the sauce.', ingredients: [
-    { item: 'Beef mince', qty: 750, unit: 'g', shop: 'alakhwan', price: 70 },
-    { item: 'Lasagne sheets', qty: 1, unit: 'pack', shop: 'netto', price: 12 },
-    { item: 'Chopped tomatoes (tin)', qty: 2, unit: '', shop: 'netto', price: 12 },
-    { item: 'Grated cheese', qty: 200, unit: 'g', shop: 'netto', price: 20 },
-    { item: 'Milk', qty: 1, unit: 'l', shop: 'netto', price: 12 },
-    { item: 'Onions', qty: 2, unit: '', shop: 'netto', price: 4 },
-  ] },
-  { id: 'spaghetti-bolognese', name: 'Spaghetti bolognese', cuisine: 'Italian', type: 'main', minutes: 40, photo: U('1673442635965-34f1b36d8944'), ingredients: [
-    { item: 'Beef mince', qty: 500, unit: 'g', shop: 'alakhwan', price: 50 },
-    { item: 'Spaghetti', qty: 500, unit: 'g', shop: 'netto', price: 10 },
-    { item: 'Chopped tomatoes (tin)', qty: 2, unit: '', shop: 'netto', price: 12 },
-    { item: 'Onions', qty: 1, unit: '', shop: 'netto', price: 2 },
-    { item: 'Carrots', qty: 2, unit: '', shop: 'netto', price: 4 },
-  ] },
-  { id: 'bulgogi', name: 'Beef bulgogi with rice', cuisine: 'Korean', type: 'main', minutes: 35,
-    note: 'Skip mirin or rice wine; a little honey and pear give the sweetness.', ingredients: [
-    { item: 'Thinly sliced beef', qty: 600, unit: 'g', shop: 'alakhwan', price: 85 },
-    { item: 'Soy sauce', qty: 1, unit: 'bottle', shop: 'netto', pantry: true, price: 15 },
-    { item: 'Pear', qty: 1, unit: '', shop: 'netto', price: 5 },
-    { item: 'Spring onions', qty: 1, unit: 'bunch', shop: 'netto', price: 8 },
-    { item: 'Jasmine rice', qty: 500, unit: 'g', shop: 'bazar', pantry: true, price: 15 },
-  ] },
-  { id: 'pho-bo', name: 'Pho with beef', cuisine: 'Vietnamese', type: 'main', minutes: 60, photo: U('1701480253822-1842236c9a97'), ingredients: [
-    { item: 'Beef (brisket or sirloin)', qty: 600, unit: 'g', shop: 'alakhwan', price: 90 },
-    { item: 'Rice noodles', qty: 400, unit: 'g', shop: 'bazar', price: 15 },
-    { item: 'Beef stock', qty: 2, unit: 'l', shop: 'netto', price: 15 },
-    { item: 'Bean sprouts', qty: 1, unit: 'pack', shop: 'netto', price: 10 },
-    { item: 'Fresh herbs (basil, coriander)', qty: 1, unit: 'pack', shop: 'bazar', price: 12 },
-    { item: 'Limes', qty: 2, unit: '', shop: 'netto', price: 6 },
-  ] },
-  { id: 'chicken-stir-fry', name: 'Chicken stir-fry with noodles', cuisine: 'Chinese', type: 'main', minutes: 25,
-    note: 'Leave out Shaoxing wine; check oyster sauce is alcohol-free.', ingredients: [
-    { item: 'Boneless chicken breast', qty: 600, unit: 'g', shop: 'alakhwan', price: 60 },
-    { item: 'Egg noodles', qty: 400, unit: 'g', shop: 'netto', price: 12 },
-    { item: 'Peppers', qty: 2, unit: '', shop: 'netto', price: 10 },
-    { item: 'Broccoli', qty: 1, unit: '', shop: 'netto', price: 10 },
-    { item: 'Soy sauce', qty: 1, unit: 'bottle', shop: 'netto', pantry: true, price: 15 },
-  ] },
-  { id: 'burgers', name: 'Homemade burgers', cuisine: 'Western', type: 'main', minutes: 30, photo: U('1560971017-e22e6a4fbefd'), ingredients: [
-    { item: 'Beef mince', qty: 600, unit: 'g', shop: 'alakhwan', price: 60 },
-    { item: 'Burger buns', qty: 4, unit: '', shop: 'netto', price: 15 },
-    { item: 'Cheese slices', qty: 1, unit: 'pack', shop: 'netto', price: 15 },
-    { item: 'Lettuce', qty: 1, unit: '', shop: 'netto', price: 8 },
-    { item: 'Tomatoes', qty: 2, unit: '', shop: 'netto', price: 6 },
-    { item: 'Oven fries', qty: 1, unit: 'bag', shop: 'netto', price: 15 },
-  ] },
+  // ---------- Desi ----------
+  { id: 'daal-chawal', name: 'Daal chawal', cuisine: 'Desi', type: 'main', minutes: 40, ingredients: [
+    I('Red lentils (masoor)', 500, 'g', 'bazar', 15, true), I('Basmati rice', 500, 'g', 'bazar', 15, true), ONIONS, I('Tomatoes', 2, '', 'netto', 6), GARLIC] },
+  { id: 'palak-ghosht', name: 'Palak ghosht', cuisine: 'Desi', type: 'main', minutes: 90, ingredients: [
+    LAMB, I('Spinach (frozen)', 1, 'kg', 'netto', 20), ONIONS, TOMATOES, GG_PASTE] },
+  { id: 'palak-aloo', name: 'Palak aloo', cuisine: 'Desi', type: 'main', minutes: 35, ingredients: [
+    I('Spinach (frozen)', 1, 'kg', 'netto', 20), I('Potatoes', 1, 'kg', 'netto', 12), ONIONS, TOMATOES, GG_PASTE] },
+  { id: 'palak-murghi', name: 'Palak murghi', cuisine: 'Desi', type: 'main', minutes: 60, ingredients: [
+    CHICKEN, I('Spinach (frozen)', 1, 'kg', 'netto', 20), ONIONS, TOMATOES, GG_PASTE] },
+  { id: 'aloo-gosht', name: 'Aloo ghosht', cuisine: 'Desi', type: 'main', minutes: 90, ingredients: [
+    LAMB, I('Potatoes', 5, '', 'netto', 10), ONIONS, TOMATOES, GG_PASTE] },
+  { id: 'butter-chicken', name: 'Butter chicken', cuisine: 'Desi', type: 'main', minutes: 50, ingredients: [
+    I('Boneless chicken thighs', 800, 'g', 'alakhwan', 75), CHOPPED_TOM, I('Cream', 250, 'ml', 'netto', 12),
+    I('Butter', 1, 'pack', 'netto', 20), I('Garam masala', 1, 'pack', 'bazar', 12, true)] },
+  { id: 'keema-aloo', name: 'Keema aloo', cuisine: 'Desi', type: 'main', minutes: 45, ingredients: [
+    MINCE, I('Potatoes', 4, '', 'netto', 8), ONIONS, TOMATOES, CHILLIES] },
+  { id: 'chaney-aloo', name: 'Chaney aloo', cuisine: 'Desi', type: 'main', minutes: 40, ingredients: [
+    I('Chickpeas (tin)', 3, '', 'netto', 18), I('Potatoes', 4, '', 'netto', 8), ONIONS, TOMATOES] },
+  { id: 'chaney-murghi', name: 'Chaney murghi', cuisine: 'Desi', type: 'main', minutes: 60, ingredients: [
+    CHICKEN, I('Chickpeas (tin)', 2, '', 'netto', 12), ONIONS, TOMATOES, GG_PASTE] },
+  { id: 'chane-ki-daal-ghosht', name: 'Chane ki daal ghosht', cuisine: 'Desi', type: 'main', minutes: 100, ingredients: [
+    I('Lamb or mutton (bone-in)', 750, 'g', 'alakhwan', 85), I('Chana daal', 400, 'g', 'bazar', 15, true), ONIONS, TOMATOES] },
+  { id: 'mix-daal', name: 'Mix daal', cuisine: 'Desi', type: 'main', minutes: 50, ingredients: [
+    I('Mixed lentils', 500, 'g', 'bazar', 18, true), ONIONS, I('Tomatoes', 2, '', 'netto', 6), GARLIC] },
+  { id: 'brown-masoor', name: 'Brown masoor', cuisine: 'Desi', type: 'main', minutes: 50, ingredients: [
+    I('Whole brown masoor', 500, 'g', 'bazar', 15, true), ONIONS, I('Tomatoes', 2, '', 'netto', 6), GARLIC] },
+  { id: 'maash-ghosht', name: 'Maash (urid) ghosht', cuisine: 'Desi', type: 'main', minutes: 100, ingredients: [
+    I('Lamb or mutton (bone-in)', 750, 'g', 'alakhwan', 85), I('Maash (urid) daal', 400, 'g', 'bazar', 15, true), ONIONS, TOMATOES] },
+  { id: 'koftay', name: 'Koftay', cuisine: 'Desi', type: 'main', minutes: 60, ingredients: [
+    MINCE, I('Eggs', 1, '', 'netto', 3), I('Onions', 3, '', 'netto', 6), TOMATOES, YOGHURT] },
+  { id: 'achaar-murghi', name: 'Achaar murghi / ghosht', cuisine: 'Desi', type: 'main', minutes: 60,
+    note: 'Use chicken, or lamb for achaar ghosht.', ingredients: [
+    CHICKEN, I('Achaar masala', 1, 'pack', 'bazar', 15, true), YOGHURT, ONIONS, I('Green chillies', 6, '', 'bazar', 6)] },
+  { id: 'chana-daal-kaddu', name: 'Chana daal kaddu', cuisine: 'Desi', type: 'main', minutes: 50, ingredients: [
+    I('Chana daal', 400, 'g', 'bazar', 15, true), I('Kaddu (bottle gourd)', 1, '', 'bazar', 20), ONIONS, I('Tomatoes', 2, '', 'netto', 6)] },
+  { id: 'gobi-ghosht', name: 'Gobi ghosht', cuisine: 'Desi', type: 'main', minutes: 80, ingredients: [
+    I('Lamb or mutton (bone-in)', 750, 'g', 'alakhwan', 85), I('Cauliflower', 1, '', 'netto', 15), ONIONS, TOMATOES] },
+  { id: 'kebab-naan', name: 'Kebab and naan', cuisine: 'Desi', type: 'main', minutes: 30, ingredients: [
+    I('Seekh or shami kebabs', 1, 'pack', 'alakhwan', 60), I('Naan', 4, '', 'bazar', 20), I('Lettuce', 1, '', 'netto', 12),
+    I('Red onion', 1, '', 'netto', 3), I('Mint chutney', 1, 'jar', 'bazar', 15)] },
+  { id: 'chicken-karahi', name: 'Chicken karahi', cuisine: 'Desi', type: 'main', minutes: 45, ingredients: [
+    I('Chicken (bone-in, karahi cut)', 1, 'kg', 'alakhwan', 65), I('Tomatoes', 5, '', 'netto', 15), CHILLIES,
+    I('Ginger', 1, 'piece', 'netto', 6), GARLIC, CORIANDER, I('Karahi spice mix', 1, 'pack', 'bazar', 15, true)] },
+  { id: 'korma', name: 'Korma', cuisine: 'Desi', type: 'main', minutes: 75, ingredients: [
+    CHICKEN, YOGHURT, I('Onions', 3, '', 'netto', 6), I('Korma spice mix', 1, 'pack', 'bazar', 15, true), GG_PASTE] },
+  { id: 'baingan', name: 'Baingan', cuisine: 'Desi', type: 'main', minutes: 40, ingredients: [
+    I('Aubergines', 3, '', 'netto', 24), ONIONS, TOMATOES, GARLIC] },
+  { id: 'dam-kebab', name: 'Dam kebab', cuisine: 'Desi', type: 'main', minutes: 60, ingredients: [
+    I('Beef mince', 1, 'kg', 'alakhwan', 90), ONIONS, I('Plain yoghurt', 250, 'g', 'netto', 8), CHILLIES, CORIANDER] },
+  { id: 'haleem', name: 'Haleem', cuisine: 'Desi', type: 'main', minutes: 180, note: 'Slow-cooked; good for weekends and guests.', ingredients: [
+    I('Boneless beef', 1, 'kg', 'alakhwan', 120), I('Haleem mix (wheat and lentils)', 1, 'pack', 'bazar', 25, true),
+    I('Onions', 4, '', 'netto', 8), I('Ginger', 1, 'piece', 'netto', 6), I('Lemons', 2, '', 'netto', 8), CORIANDER] },
+  { id: 'payaaz-gosht', name: 'Payaaz gosht', cuisine: 'Desi', type: 'main', minutes: 90, ingredients: [
+    LAMB, I('Onions', 1, 'kg', 'netto', 12), I('Tomatoes', 2, '', 'netto', 6), I('Plain yoghurt', 250, 'g', 'netto', 8)] },
 
-  // Sides and desserts
-  { id: 'raita', name: 'Raita', cuisine: 'Pakistani', type: 'side', minutes: 10, ingredients: [
-    { item: 'Plain yoghurt', qty: 500, unit: 'g', shop: 'netto', price: 12 },
-    { item: 'Cucumber', qty: 1, unit: '', shop: 'netto', price: 6 },
-    { item: 'Fresh mint', qty: 1, unit: 'bunch', shop: 'bazar', price: 10 },
-  ] },
-  { id: 'kachumber', name: 'Kachumber salad', cuisine: 'Pakistani', type: 'side', minutes: 10, photo: U('1752766074879-62b66c5f3477'), ingredients: [
-    { item: 'Tomatoes', qty: 3, unit: '', shop: 'netto', price: 9 },
-    { item: 'Cucumber', qty: 1, unit: '', shop: 'netto', price: 6 },
-    { item: 'Red onion', qty: 1, unit: '', shop: 'netto', price: 3 },
-    { item: 'Lemon', qty: 1, unit: '', shop: 'netto', price: 4 },
-  ] },
-  { id: 'naan', name: 'Naan', cuisine: 'Pakistani', type: 'side', minutes: 5, ingredients: [
-    { item: 'Naan', qty: 4, unit: '', shop: 'bazar', price: 20 },
-  ] },
-  { id: 'plain-rice', name: 'Plain basmati rice', cuisine: 'Pakistani', type: 'side', minutes: 20, ingredients: [
-    { item: 'Basmati rice', qty: 400, unit: 'g', shop: 'bazar', pantry: true, price: 12 },
-  ] },
-  { id: 'agurkesalat', name: 'Agurkesalat (cucumber salad)', cuisine: 'Danish', type: 'side', minutes: 10, ingredients: [
-    { item: 'Cucumber', qty: 1, unit: '', shop: 'netto', price: 6 },
-    { item: 'Vinegar', qty: 1, unit: 'bottle', shop: 'netto', pantry: true, price: 10 },
-  ] },
-  { id: 'kheer', name: 'Kheer (rice pudding)', cuisine: 'Pakistani', type: 'dessert', minutes: 60, ingredients: [
-    { item: 'Milk', qty: 1.5, unit: 'l', shop: 'netto', price: 18 },
-    { item: 'Basmati rice', qty: 100, unit: 'g', shop: 'bazar', pantry: true, price: 3 },
-    { item: 'Sugar', qty: 1, unit: 'pack', shop: 'netto', pantry: true, price: 10 },
-    { item: 'Cardamom and pistachios', qty: 1, unit: 'pack', shop: 'bazar', price: 20 },
-  ] },
-  { id: 'fruit-chaat', name: 'Fruit chaat', cuisine: 'Pakistani', type: 'dessert', minutes: 15, ingredients: [
-    { item: 'Mixed fruit (apples, bananas, oranges)', qty: 1, unit: 'kg', shop: 'netto', price: 25 },
-    { item: 'Chaat masala', qty: 1, unit: 'pack', shop: 'bazar', pantry: true, price: 10 },
-  ] },
+  // ---------- Rice ----------
+  { id: 'chicken-biryani', name: 'Biryani', cuisine: 'Rice', type: 'main', minutes: 90, photo: U('1631515243349-e0cb75fb8d3a'), ingredients: [
+    CHICKEN, RICE, I('Biryani spice mix', 1, 'pack', 'bazar', 15, true), I('Onions', 3, '', 'netto', 6), YOGHURT,
+    I('Potatoes', 4, '', 'netto', 8), I('Fresh mint', 1, 'bunch', 'bazar', 10)] },
+  { id: 'pilao', name: 'Pilao (beef or murghi)', cuisine: 'Rice', type: 'main', minutes: 75, note: 'Beef or chicken.', ingredients: [
+    I('Beef or chicken (bone-in)', 1, 'kg', 'alakhwan', 90), RICE, ONIONS, WHOLE_SPICES, I('Plain yoghurt', 250, 'g', 'netto', 8)] },
+  { id: 'tahri', name: 'Tahri', cuisine: 'Rice', type: 'main', minutes: 45, ingredients: [
+    RICE, I('Potatoes', 4, '', 'netto', 8), I('Frozen peas', 500, 'g', 'netto', 12), ONIONS, WHOLE_SPICES] },
+  { id: 'kabli-pilao', name: 'Kabli pilao', cuisine: 'Rice', type: 'main', minutes: 90, ingredients: [
+    LAMB, RICE, I('Carrots', 4, '', 'netto', 8), I('Raisins', 1, 'pack', 'netto', 12), ONIONS, WHOLE_SPICES] },
+  { id: 'chana-pilao', name: 'Chana pilao', cuisine: 'Rice', type: 'main', minutes: 50, ingredients: [
+    RICE, I('Chickpeas (tin)', 2, '', 'netto', 12), ONIONS, WHOLE_SPICES] },
+  { id: 'mattar-pilao', name: 'Mattar pilao', cuisine: 'Rice', type: 'main', minutes: 40, ingredients: [
+    RICE, I('Frozen peas', 500, 'g', 'netto', 12), ONIONS, WHOLE_SPICES] },
+
+  // ---------- Western ----------
+  { id: 'chicken-roast', name: 'Chicken roast and potatoes', cuisine: 'Western', type: 'main', minutes: 90, ingredients: [
+    I('Whole chicken', 1, '', 'alakhwan', 70), I('Potatoes', 1.5, 'kg', 'netto', 18), I('Carrots', 4, '', 'netto', 8), ONIONS, I('Butter', 1, 'pack', 'netto', 20, true)] },
+  { id: 'frikadeller', name: 'Frikadeller', cuisine: 'Western', type: 'main', minutes: 45,
+    note: 'Made with halal beef or lamb mince instead of the traditional pork.', ingredients: [
+    MINCE, I('Eggs', 2, '', 'netto', 6), I('Onions', 1, '', 'netto', 2), I('Milk', 1, 'l', 'netto', 12), I('New potatoes', 1, 'kg', 'netto', 15)] },
+  { id: 'chicken-pan-fry', name: 'Chicken pan fry', cuisine: 'Western', type: 'main', minutes: 30, ingredients: [
+    I('Chicken breast', 800, 'g', 'alakhwan', 70), I('Peppers', 3, '', 'netto', 15), ONIONS, I('Mixed vegetables', 1, 'bag', 'netto', 15)] },
+  { id: 'fried-chicken', name: 'Fried chicken', cuisine: 'Western', type: 'main', minutes: 60, ingredients: [
+    I('Chicken drumsticks and thighs', 1.5, 'kg', 'alakhwan', 80), I('Flour', 1, 'pack', 'netto', 10, true), I('Eggs', 2, '', 'netto', 6),
+    I('Cooking oil', 1, 'bottle', 'netto', 25, true), I('Oven fries', 1, 'bag', 'netto', 15)] },
+  { id: 'bof-med-log', name: 'Bøf med løg', cuisine: 'Western', type: 'main', minutes: 40, ingredients: [
+    I('Beef mince', 600, 'g', 'alakhwan', 60), I('Onions', 4, '', 'netto', 8), I('Potatoes', 1, 'kg', 'netto', 12),
+    I('Brown sauce mix', 1, 'pack', 'netto', 10), I('Butter', 1, 'pack', 'netto', 20, true)] },
+  { id: 'burgers', name: 'Burgers', cuisine: 'Western', type: 'main', minutes: 30, photo: U('1560971017-e22e6a4fbefd'), ingredients: [
+    I('Beef mince (or halal burger patties)', 600, 'g', 'alakhwan', 60), I('Burger buns', 1, 'pack', 'netto', 15), I('Lettuce', 1, '', 'netto', 12),
+    I('Tomatoes', 2, '', 'netto', 6), I('Cheese slices', 1, 'pack', 'netto', 15), I('Oven fries', 1, 'bag', 'netto', 15)] },
+  { id: 'chili-con-carne', name: 'Chili con carne', cuisine: 'Western', type: 'main', minutes: 50, ingredients: [
+    I('Beef mince', 500, 'g', 'alakhwan', 50), I('Kidney beans (tin)', 2, '', 'netto', 14), CHOPPED_TOM, ONIONS,
+    I('Basmati rice', 400, 'g', 'bazar', 12, true), I('Chili spice mix', 1, 'pack', 'netto', 10, true)] },
+  { id: 'wraps', name: 'Wraps (chicken or beef)', cuisine: 'Western', type: 'main', minutes: 30, ingredients: [
+    I('Chicken or beef strips', 600, 'g', 'alakhwan', 55), I('Tortilla wraps', 1, 'pack', 'netto', 15), I('Lettuce', 1, '', 'netto', 12),
+    I('Tomatoes', 2, '', 'netto', 6), CHEESE, I('Sour cream', 1, 'tub', 'netto', 10)] },
+  { id: 'lasagne', name: 'Lasagna (meat)', cuisine: 'Western', type: 'main', minutes: 75, note: 'Use stock instead of wine in the sauce.', ingredients: [
+    MINCE, I('Lasagne sheets', 1, 'pack', 'netto', 12), CHOPPED_TOM, CHEESE, I('Milk', 1, 'l', 'netto', 12), ONIONS] },
+  { id: 'low-carb-lasagna', name: 'Low-carb lasagna', cuisine: 'Western', type: 'main', minutes: 75, note: 'Sliced courgette instead of lasagne sheets.', ingredients: [
+    MINCE, I('Courgettes', 3, '', 'netto', 18), CHOPPED_TOM, CHEESE, I('Cottage cheese', 1, 'tub', 'netto', 15)] },
+  { id: 'veggie-lasagna', name: 'Veggie lasagna', cuisine: 'Western', type: 'main', minutes: 75, ingredients: [
+    I('Lasagne sheets', 1, 'pack', 'netto', 12), I('Courgettes', 2, '', 'netto', 12), I('Spinach (frozen)', 450, 'g', 'netto', 15),
+    CHOPPED_TOM, CHEESE, I('Milk', 1, 'l', 'netto', 12)] },
+  { id: 'pizza', name: 'Pizza', cuisine: 'Western', type: 'main', minutes: 40, ingredients: [
+    I('Pizza dough', 2, 'pack', 'netto', 20), I('Tomato passata', 1, '', 'netto', 8), I('Mozzarella', 2, '', 'netto', 20),
+    I('Halal pepperoni or chicken', 1, 'pack', 'alakhwan', 30), I('Peppers', 2, '', 'netto', 10)] },
+  { id: 'spaghetti-bolognese', name: 'Pasta kødsovs', cuisine: 'Western', type: 'main', minutes: 40, photo: U('1673442635965-34f1b36d8944'), ingredients: [
+    I('Beef mince', 500, 'g', 'alakhwan', 50), I('Spaghetti', 500, 'g', 'netto', 10), CHOPPED_TOM, I('Onions', 1, '', 'netto', 2), I('Carrots', 2, '', 'netto', 4)] },
+  { id: 'baked-pasta', name: 'Baked pasta', cuisine: 'Western', type: 'main', minutes: 50, ingredients: [
+    I('Penne', 500, 'g', 'netto', 10), I('Beef mince', 500, 'g', 'alakhwan', 50), CHOPPED_TOM, CHEESE, I('Onions', 1, '', 'netto', 2)] },
+  { id: 'meatball-spaghetti', name: 'Meatballs and spaghetti', cuisine: 'Western', type: 'main', minutes: 50, ingredients: [
+    I('Beef mince', 600, 'g', 'alakhwan', 60), I('Spaghetti', 500, 'g', 'netto', 10), CHOPPED_TOM, I('Eggs', 1, '', 'netto', 3),
+    I('Breadcrumbs', 1, 'pack', 'netto', 10, true), I('Onions', 1, '', 'netto', 2)] },
+  { id: 'kylling-karry', name: 'Kylling i karrysovs', cuisine: 'Western', type: 'main', minutes: 40, ingredients: [
+    I('Chicken breast', 800, 'g', 'alakhwan', 70), I('Curry powder', 1, 'pack', 'netto', 10, true), I('Cream', 250, 'ml', 'netto', 12),
+    I('Leek', 1, '', 'netto', 8), I('Apple', 1, '', 'netto', 3), I('Basmati rice', 400, 'g', 'bazar', 12, true)] },
+  { id: 'shepherds-pie', name: "Shepherd's pie", cuisine: 'Western', type: 'main', minutes: 75, ingredients: [
+    I('Lamb mince', 750, 'g', 'alakhwan', 80), I('Potatoes', 1.5, 'kg', 'netto', 18), I('Carrots', 3, '', 'netto', 6),
+    I('Frozen peas', 300, 'g', 'netto', 8), ONIONS, I('Milk', 0.5, 'l', 'netto', 6)] },
+  { id: 'mac-fried-chicken', name: 'Mac and cheese with fried chicken', cuisine: 'Western', type: 'main', minutes: 50, ingredients: [
+    I('Macaroni', 500, 'g', 'netto', 10), I('Cheddar', 300, 'g', 'netto', 30), I('Milk', 1, 'l', 'netto', 12),
+    I('Butter', 1, 'pack', 'netto', 20, true), I('Breaded chicken strips', 600, 'g', 'alakhwan', 55)] },
+  { id: 'fish-pan-fried', name: 'Fish, pan fried', cuisine: 'Western', type: 'main', minutes: 30, ingredients: [
+    I('White fish fillets (cod or plaice)', 800, 'g', 'netto', 80), I('Potatoes', 1, 'kg', 'netto', 12), I('Lemon', 1, '', 'netto', 4),
+    I('Flour', 1, 'pack', 'netto', 10, true), I('Remoulade or tartar sauce', 1, '', 'netto', 12)] },
+  { id: 'fish-sticks', name: 'Fish sticks', cuisine: 'Western', type: 'main', minutes: 25, ingredients: [
+    I('Fish fingers', 1, 'big pack', 'netto', 35), I('Oven fries', 1, 'bag', 'netto', 15), I('Frozen peas', 500, 'g', 'netto', 12)] },
+
+  // ---------- Asian ----------
+  { id: 'beef-stir-fry', name: 'Stir-fry beef', cuisine: 'Asian', type: 'main', minutes: 30, ingredients: [
+    I('Beef strips', 600, 'g', 'alakhwan', 70), I('Stir-fry vegetables', 2, 'bag', 'netto', 30), I('Soy sauce', 1, 'bottle', 'netto', 15, true),
+    I('Egg noodles', 1, 'pack', 'netto', 12)] },
+  { id: 'chicken-stir-fry', name: 'Stir-fry chicken', cuisine: 'Asian', type: 'main', minutes: 30, ingredients: [
+    I('Chicken breast', 600, 'g', 'alakhwan', 55), I('Stir-fry vegetables', 2, 'bag', 'netto', 30), I('Soy sauce', 1, 'bottle', 'netto', 15, true),
+    I('Basmati rice', 400, 'g', 'bazar', 12, true)] },
+  { id: 'noodles', name: 'Noodles', cuisine: 'Asian', type: 'main', minutes: 25, ingredients: [
+    I('Egg noodles', 2, 'pack', 'netto', 20), I('Chicken strips', 400, 'g', 'alakhwan', 40), I('Stir-fry vegetables', 1, 'bag', 'netto', 15),
+    I('Soy sauce', 1, 'bottle', 'netto', 15, true), I('Eggs', 2, '', 'netto', 6)] },
+  { id: 'chicken-soup', name: 'Chicken soup', cuisine: 'Asian', type: 'main', minutes: 60, photo: U('1701480253822-1842236c9a97'), ingredients: [
+    CHICKEN, I('Carrots', 3, '', 'netto', 6), ONIONS, I('Rice noodles', 1, 'pack', 'netto', 10), I('Ginger', 1, 'piece', 'netto', 6)] },
+  { id: 'halal-ramen', name: 'Halal ramen', cuisine: 'Asian', type: 'main', minutes: 40, note: 'Check the noodles’ flavour sachet is halal.', ingredients: [
+    I('Ramen noodles', 4, 'pack', 'bazar', 40), I('Chicken breast', 500, 'g', 'alakhwan', 45), I('Eggs', 4, '', 'netto', 12),
+    I('Spring onions', 1, 'bunch', 'netto', 8), I('Pak choi', 2, '', 'netto', 12)] },
+  { id: 'thai-red-curry', name: 'Thai red curry', cuisine: 'Asian', type: 'main', minutes: 40, ingredients: [
+    I('Chicken breast', 800, 'g', 'alakhwan', 70), I('Red curry paste', 1, 'jar', 'bazar', 18), I('Coconut milk (tin)', 2, '', 'netto', 20),
+    I('Peppers', 2, '', 'netto', 10), I('Jasmine rice', 500, 'g', 'netto', 15, true)] },
+  { id: 'salmon-teriyaki', name: 'Salmon teriyaki', cuisine: 'Asian', type: 'main', minutes: 30, note: 'Choose a teriyaki sauce without mirin (alcohol).', ingredients: [
+    I('Salmon fillets', 4, '', 'netto', 90), I('Teriyaki sauce', 1, 'bottle', 'netto', 20), I('Jasmine rice', 400, 'g', 'netto', 12, true),
+    I('Broccoli', 1, '', 'netto', 12)] },
+
+  // ---------- Sides ----------
+  { id: 'hot-wings', name: 'Hot wings', cuisine: 'Western', type: 'side', minutes: 40, ingredients: [
+    I('Chicken wings', 1, 'kg', 'alakhwan', 50), I('Hot sauce', 1, 'bottle', 'netto', 15, true)] },
+  { id: 'cream-potatoes', name: 'Cream potatoes', cuisine: 'Western', type: 'side', minutes: 60, ingredients: [
+    I('Potatoes', 1, 'kg', 'netto', 12), I('Cream', 250, 'ml', 'netto', 12), GARLIC, I('Grated cheese', 100, 'g', 'netto', 10)] },
+  { id: 'coleslaw', name: 'Coleslaw', cuisine: 'Western', type: 'side', minutes: 15, ingredients: [
+    I('White cabbage', 1, '', 'netto', 10), I('Carrots', 2, '', 'netto', 4), I('Mayonnaise', 1, 'jar', 'netto', 15, true)] },
+  { id: 'mash', name: 'Mash potatoes', cuisine: 'Western', type: 'side', minutes: 30, ingredients: [
+    I('Potatoes', 1, 'kg', 'netto', 12), I('Milk', 0.5, 'l', 'netto', 6), I('Butter', 1, 'pack', 'netto', 20, true)] },
+  { id: 'bean-salad', name: 'Bean salad', cuisine: 'Western', type: 'side', minutes: 10, ingredients: [
+    I('Mixed beans (tin)', 2, '', 'netto', 14), I('Red onion', 1, '', 'netto', 3), I('Tomatoes', 2, '', 'netto', 6), I('Lemon', 1, '', 'netto', 4)] },
+  { id: 'naan', name: 'Naan', cuisine: 'Desi', type: 'side', minutes: 5, ingredients: [
+    I('Naan', 4, '', 'bazar', 20)] },
+  { id: 'potato-wedges', name: 'Potato wedges', cuisine: 'Western', type: 'side', minutes: 40, ingredients: [
+    I('Potatoes', 1, 'kg', 'netto', 12), I('Cooking oil', 1, 'bottle', 'netto', 25, true)] },
+  { id: 'hasselback', name: 'Hasselback kartofler', cuisine: 'Western', type: 'side', minutes: 60, ingredients: [
+    I('Potatoes', 1, 'kg', 'netto', 12), I('Butter', 1, 'pack', 'netto', 20, true)] },
+  { id: 'biscuits', name: 'Biscuits', cuisine: 'Western', type: 'side', minutes: 2, ingredients: [
+    I('Biscuits', 1, 'pack', 'netto', 15)] },
+  { id: 'salad', name: 'Salad', cuisine: 'Desi', type: 'side', minutes: 10, photo: U('1752766074879-62b66c5f3477'), ingredients: [
+    I('Lettuce', 1, '', 'netto', 12), TOMATOES, I('Cucumber', 1, '', 'netto', 6)] },
+  { id: 'achar', name: 'Achar', cuisine: 'Desi', type: 'side', minutes: 1, ingredients: [
+    I('Mixed pickle (achar)', 1, 'jar', 'bazar', 20, true)] },
+
+  // ---------- Drinks ----------
+  { id: 'yoghurt', name: 'Yoghurt', cuisine: 'Desi', type: 'drink', minutes: 2, ingredients: [
+    I('Plain yoghurt', 1, 'kg', 'netto', 20)] },
+  { id: 'lipton-lemon', name: 'Lipton lemon', cuisine: 'Western', type: 'drink', minutes: 1, ingredients: [
+    I('Lipton Ice Tea lemon', 1.5, 'l', 'netto', 20)] },
+  { id: 'ginger-ale', name: 'Ginger ale', cuisine: 'Western', type: 'drink', minutes: 1, ingredients: [
+    I('Ginger ale', 1.5, 'l', 'netto', 18)] },
+  { id: 'homemade-fanta', name: 'Homemade Fanta', cuisine: 'Western', type: 'drink', minutes: 10, ingredients: [
+    I('Oranges', 1, 'kg', 'netto', 20), I('Sparkling water', 1.5, 'l', 'netto', 8), I('Sugar', 1, 'pack', 'netto', 10, true)] },
+  { id: 'water', name: 'Water', cuisine: 'Western', type: 'drink', minutes: 1, ingredients: [] },
+  { id: 'lemonade', name: 'Lemonade', cuisine: 'Western', type: 'drink', minutes: 10, ingredients: [
+    I('Lemons', 4, '', 'netto', 16), I('Sugar', 1, 'pack', 'netto', 10, true)] },
 ];
 
-// Ready-made menus for special occasions (main dish plus sides).
+// Ready-made menus for special occasions (main dish plus sides and drinks).
 const STARTER_OCCASIONS = [
-  { id: 'eid', name: 'Eid dinner', icon: '🌙', main: 'chicken-biryani', sides: ['raita', 'kachumber', 'kheer'] },
-  { id: 'iftar', name: 'Iftar evening', icon: '🕌', main: 'chicken-karahi', sides: ['naan', 'fruit-chaat', 'kachumber'] },
-  { id: 'guests', name: 'Guests for dinner', icon: '🎉', main: 'butter-chicken', sides: ['plain-rice', 'naan', 'raita', 'kheer'] },
+  { id: 'eid', name: 'Eid dinner', icon: '🌙', main: 'chicken-biryani', sides: ['salad', 'achar', 'yoghurt', 'ginger-ale'] },
+  { id: 'iftar', name: 'Iftar evening', icon: '🕌', main: 'chicken-karahi', sides: ['naan', 'salad', 'lemonade'] },
+  { id: 'guests', name: 'Guests for dinner', icon: '🎉', main: 'korma', sides: ['naan', 'salad', 'achar', 'homemade-fanta'] },
 ];
 
 // Household items the family can add with one tap ("running low").
@@ -181,11 +256,11 @@ const HOUSEHOLD_ITEMS = [
 // Interface words in English and Urdu.
 const WORDS = {
   en: { week: 'This week', recipes: 'Recipes', shop: 'Shopping', tonight: 'Tonight', hello: 'Assalam-o-Alaikum',
-    cooking: 'Who is cooking?', home: 'Who is home?', guests: 'Guests', sides: 'Sides and dessert', menus: 'Special menus',
+    cooking: 'Who is cooking?', home: 'Who is home?', guests: 'Guests', sides: 'Sides', drinks: 'Drinks', menus: 'Special menus',
     change: 'Change', clear: 'Clear day', done: 'Done', planNext: 'Plan next week', pantry: 'Pantry check',
     total: 'Rough cost this week', settings: 'Settings', nothing: 'Nothing planned yet. Tap to choose.' },
   ur: { week: 'اس ہفتے', recipes: 'ترکیبیں', shop: 'خریداری', tonight: 'آج رات', hello: 'السلام علیکم',
-    cooking: 'کون پکائے گا؟', home: 'گھر پر کون ہے؟', guests: 'مہمان', sides: 'سائیڈ اور میٹھا', menus: 'خاص مینو',
+    cooking: 'کون پکائے گا؟', home: 'گھر پر کون ہے؟', guests: 'مہمان', sides: 'سائیڈ', drinks: 'مشروبات', menus: 'خاص مینو',
     change: 'تبدیل کریں', clear: 'دن صاف کریں', done: 'ٹھیک ہے', planNext: 'اگلے ہفتے کا پلان', pantry: 'گھر کا سامان',
     total: 'اس ہفتے کا اندازاً خرچ', settings: 'ترتیبات', nothing: 'ابھی کچھ طے نہیں۔ چننے کے لیے دبائیں۔' },
 };

@@ -4,9 +4,9 @@ The Khan family's weekly dinner planner. *Dastarkhwan* is the Urdu and Persian w
 
 ## What it does
 
-- **This week:** a "Tonight" card, then Monday to Sunday. Tap a day to choose dinner (or eating out, takeaway, leftovers), add sides and dessert, pick who is cooking, mark who is not home and add guests. Quantities scale to the number of people eating.
+- **This week:** a "Tonight" card, then Monday to Sunday. Tap a day to choose dinner (or eating out, takeaway, leftovers), add sides and drinks, pick who is cooking, mark who is not home and add guests. Quantities scale to the number of people eating.
 - **Special menus:** Eid dinner, Iftar evening, Guests for dinner, or your own, applied to a day in one tap.
-- **Recipes:** halal family dishes, sides and desserts, tagged by cuisine, with photos, ingredients, usual shop and a rough price. Add, edit and delete dishes, and take your own food photos.
+- **Recipes:** the family's own dinner list (Desi, Rice, Western, Asian) plus sides and drinks, all halal, with photos, ingredients, usual shop and a rough price. Add, edit and delete dishes, and take your own food photos.
 - **Shopping:** built from the week's dinners and sides, grouped by shop (Al-Akhwan, Nordvest Bazar, Netto, plus Rema, Lidl and 365discount for offers), with a pantry check, household items, a rough weekly cost, and sharing by WhatsApp.
 - **Settings:** family names (kept on the phone, not in this public code), usual servings, English or Urdu labels, light or dark theme.
 
@@ -20,6 +20,7 @@ Works on Android and iPhone: open the link and choose **Add to Home Screen**.
 - [x] Release B: servings, who is home, guests, who is cooking
 - [x] Release C: WhatsApp sharing, pantry check, rough weekly cost
 - [x] Release D: sides and desserts, special menus, food photos
+- [x] The family's own dinner list: 57 dinners, 11 sides, 6 drinks; deleted dishes stay deleted
 - [ ] Version 2: share the plan and lists across the family's phones
 - [ ] Sara's recipes and family photos
 - [ ] Family votes and ratings

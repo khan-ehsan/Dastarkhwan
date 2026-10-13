@@ -47,8 +47,8 @@
       <h2 id="editorTitle">Add new dish</h2>
       <label>Dish name <input name="name" required placeholder="e.g. Chicken pulao"></label>
       <div class="three">
-        <label>Type <select name="type"><option value="main">Main</option><option value="side">Side</option><option value="dessert">Dessert</option></select></label>
-        <label>Cuisine <select name="cuisine"></select></label>
+        <label>Type <select name="type"><option value="main">Main</option><option value="side">Side</option><option value="drink">Drink</option><option value="dessert">Dessert</option></select></label>
+        <label>Group <select name="cuisine"></select></label>
         <label>Minutes <input name="minutes" type="number" min="5" value="45"></label>
       </div>
       <div class="photo-pick">
@@ -74,7 +74,7 @@
       <label>Name <input name="name" required placeholder="e.g. Sunday family lunch"></label>
       <label>Icon <input name="icon" maxlength="2" value="⭐"></label>
       <label>Main dish <select name="main" id="menuMain"></select></label>
-      <p class="hint">Sides and dessert</p>
+      <p class="hint">Sides and drinks</p>
       <div id="menuSides" class="chips"></div>
       <menu><button type="button" id="menuCancel" class="ghost">Cancel</button><button type="submit">Save menu</button></menu>
     </form>
