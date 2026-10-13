@@ -91,3 +91,24 @@ dialog h2 { margin: 0 0 8px; font-size: 1.1rem; }
 .picker-list h3 { font-size: .85rem; color: var(--muted); margin: 12px 0 4px; text-transform: uppercase; letter-spacing: .5px; }
 .pick { display: block; width: 100%; text-align: left; background: var(--bg); color: var(--ink); border: 1px solid var(--line); margin-bottom: 6px; }
 menu { display: flex; justify-content: space-between; padding: 0; margin: 12px 0 0; }
+
+/* recipe editor */
+.add-btn { margin: 0 0 12px; }
+.recipe-actions { display: flex; gap: 8px; margin-top: 10px; }
+.recipe-actions button { padding: 6px 12px; font-size: .9rem; }
+.danger { color: var(--warn) !important; }
+#editor { width: min(96vw, 560px); max-height: 90vh; }
+#editorForm { padding: 14px; overflow: auto; max-height: 88vh; }
+#editorForm label { display: block; font-size: .9rem; color: var(--muted); margin-bottom: 10px; }
+#editorForm input, #editorForm select { display: block; width: 100%; margin-top: 4px; padding: 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); }
+#editorForm h3 { margin: 6px 0 2px; font-size: 1rem; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.hint { font-size: .8rem; color: var(--muted); margin: 0 0 8px; }
+.ing-row { display: grid; grid-template-columns: 1fr 64px 64px; gap: 6px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 8px; }
+.ing-row input, .ing-row select { margin: 0 !important; padding: 8px !important; }
+.ing-row .i-item { grid-column: 1 / -1; }
+.ing-row .i-shop { grid-column: 1 / 2; }
+.ing-row .i-pantry { display: flex; align-items: center; gap: 4px; margin: 0 !important; font-size: .8rem; }
+.ing-row .i-pantry input { width: 18px; height: 18px; display: inline; }
+.ing-row .i-del { padding: 6px; }
+#addIng { margin-bottom: 12px; }

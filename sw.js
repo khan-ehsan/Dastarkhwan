@@ -1,5 +1,5 @@
 // Service worker: keeps the app working offline (for example in the supermarket with weak signal).
-const CACHE = 'dastarkhwan-v1';
+const CACHE = 'dastarkhwan-v2';
 const FILES = ['./', 'index.html', 'style.css', 'app.js', 'data.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', (e) => e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))));
 self.addEventListener('activate', (e) => e.waitUntil(

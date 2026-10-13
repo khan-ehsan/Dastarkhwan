@@ -38,6 +38,23 @@
     </form>
   </dialog>
 
+  <dialog id="editor">
+    <form id="editorForm">
+      <h2 id="editorTitle">Add new dish</h2>
+      <label>Dish name <input name="name" required placeholder="e.g. Chicken pulao"></label>
+      <div class="two">
+        <label>Cuisine <select name="cuisine"></select></label>
+        <label>Minutes <input name="minutes" type="number" min="5" value="45"></label>
+      </div>
+      <h3>Ingredients</h3>
+      <p class="hint">One row per ingredient. Tick <b>Pantry</b> for things usually at home (rice, spices, oil); they only go on the shopping list when marked as running low.</p>
+      <div id="ingRows"></div>
+      <button type="button" id="addIng" class="ghost">+ Add ingredient</button>
+      <label>Note (optional) <input name="note" placeholder="e.g. Use stock instead of wine"></label>
+      <menu><button type="button" id="editorCancel" class="ghost">Cancel</button><button type="submit">Save dish</button></menu>
+    </form>
+  </dialog>
+
   <script src="data.js"></script>
   <script src="app.js"></script>
 </body>

@@ -107,6 +107,7 @@ let recipeFilter = 'All';
 function renderRecipes() {
   const sec = $('#tab-recipes');
   sec.replaceChildren();
+  sec.append(el('button', { class: 'wide add-btn', onclick: () => openEditor(null) }, '+ Add new dish'));
   const chips = el('div', { class: 'chips' });
   ['All', ...CUISINES].forEach((c) => chips.append(el('button', {
     class: 'chip' + (c === recipeFilter ? ' on' : ''), onclick: () => { recipeFilter = c; renderRecipes(); },
@@ -115,40 +116,78 @@ function renderRecipes() {
   state.recipes.filter((r) => recipeFilter === 'All' || r.cuisine === recipeFilter).forEach((r) => {
     sec.append(el('details', { class: 'recipe' },
       el('summary', {}, r.name, el('span', { class: 'tag' }, r.cuisine), el('small', {}, ` ${r.minutes} min`)),
-      r.note ? el('p', { class: 'note' }, '☪︎ Halal note: ' + r.note) : null,
+      r.note ? el('p', { class: 'note' }, '☪︎ Note: ' + r.note) : null,
       el('ul', {}, r.ingredients.map((g) => el('li', {},
         `${g.qty ? g.qty + (g.unit ? ' ' + g.unit : '') + ' ' : ''}${g.item}`,
         el('small', {}, ` · ${shopName(g.shop)}${g.pantry ? ' · pantry' : ''}`)))),
+      el('div', { class: 'recipe-actions' },
+        el('button', { class: 'ghost', onclick: () => openEditor(r) }, '✏️ Edit'),
+        el('button', { class: 'ghost danger', onclick: () => deleteRecipe(r) }, '🗑️ Delete')),
     ));
   });
-  sec.append(addRecipeForm());
 }
 
-function addRecipeForm() {
-  const f = el('form', { class: 'card add' },
-    el('h2', {}, 'Add a family recipe'),
-    el('label', {}, 'Dish name', el('input', { name: 'name', required: '' })),
-    el('label', {}, 'Cuisine', el('select', { name: 'cuisine' }, CUISINES.map((c) => el('option', {}, c)))),
-    el('label', {}, 'Minutes', el('input', { name: 'minutes', type: 'number', value: '45', min: '5' })),
-    el('label', {}, 'Ingredients, one per line: item, quantity, unit, shop',
-      el('textarea', { name: 'ing', rows: '5', placeholder: 'Chicken thighs, 800, g, Al-Akhwan\nOnions, 2, , Netto\nBasmati rice, 500, g, Nordvest Bazar' })),
-    el('button', { type: 'submit' }, 'Save recipe'),
-  );
-  f.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const fd = new FormData(f);
-    const ingredients = String(fd.get('ing')).split('\n').map((l) => l.split(',').map((s) => s.trim())).filter((p) => p[0])
-      .map(([item, qty, unit, shop]) => {
-        const s = SHOPS.find((x) => x.name.toLowerCase() === (shop || '').toLowerCase() || x.id === (shop || '').toLowerCase());
-        return { item, qty: Number(qty) || 0, unit: unit || '', shop: s ? s.id : 'netto' };
-      });
-    const name = String(fd.get('name')).trim();
-    state.recipes.push({ id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now().toString(36),
-      name, cuisine: fd.get('cuisine'), minutes: Number(fd.get('minutes')) || 45, ingredients });
-    save(); renderRecipes();
-  });
-  return f;
+function deleteRecipe(r) {
+  if (!window.confirm(`Delete "${r.name}"? It will also be removed from any planned days.`)) return;
+  state.recipes = state.recipes.filter((x) => x.id !== r.id);
+  for (const [day, id] of Object.entries(state.plan)) if (id === r.id) delete state.plan[day];
+  save(); render();
 }
+
+// One row per ingredient: item, quantity, unit, shop, pantry tick, remove button.
+function ingredientRow(g = {}) {
+  const shopSel = el('select', { class: 'i-shop', 'aria-label': 'Shop' },
+    SHOPS.map((s) => el('option', Object.assign({ value: s.id }, (g.shop || 'netto') === s.id ? { selected: '' } : {}), s.name)));
+  const row = el('div', { class: 'ing-row' },
+    el('input', { class: 'i-item', placeholder: 'Ingredient', value: g.item || '', 'aria-label': 'Ingredient' }),
+    el('input', { class: 'i-qty', type: 'number', step: 'any', min: '0', placeholder: 'Qty', value: g.qty || '', 'aria-label': 'Quantity' }),
+    el('input', { class: 'i-unit', placeholder: 'Unit', value: g.unit || '', 'aria-label': 'Unit (g, kg, pack…)' }),
+    shopSel,
+    el('label', { class: 'i-pantry', title: 'Usually at home (rice, spices, oil)' },
+      el('input', Object.assign({ type: 'checkbox', class: 'i-pan' }, g.pantry ? { checked: '' } : {})), 'Pantry'),
+    el('button', { type: 'button', class: 'ghost i-del', 'aria-label': 'Remove ingredient', onclick: () => row.remove() }, '✕'),
+  );
+  return row;
+}
+
+let editingId = null;
+function openEditor(r) {
+  editingId = r ? r.id : null;
+  const f = $('#editorForm');
+  $('#editorTitle').textContent = r ? `Edit ${r.name}` : 'Add new dish';
+  f.elements.name.value = r ? r.name : '';
+  f.elements.cuisine.replaceChildren(...CUISINES.map((c) => el('option', Object.assign({}, r && r.cuisine === c ? { selected: '' } : {}), c)));
+  f.elements.minutes.value = r ? r.minutes : 45;
+  f.elements.note.value = r && r.note ? r.note : '';
+  const rows = $('#ingRows');
+  rows.replaceChildren(...(r && r.ingredients.length ? r.ingredients : [{}, {}, {}]).map(ingredientRow));
+  $('#editor').showModal();
+}
+
+$('#addIng').addEventListener('click', () => $('#ingRows').append(ingredientRow()));
+$('#editorCancel').addEventListener('click', () => $('#editor').close());
+$('#editorForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const name = f.elements.name.value.trim();
+  if (!name) return;
+  const ingredients = [...document.querySelectorAll('#ingRows .ing-row')].map((row) => ({
+    item: row.querySelector('.i-item').value.trim(),
+    qty: Number(row.querySelector('.i-qty').value) || 0,
+    unit: row.querySelector('.i-unit').value.trim(),
+    shop: row.querySelector('.i-shop').value,
+    pantry: row.querySelector('.i-pan').checked || undefined,
+  })).filter((g) => g.item);
+  const data = { name, cuisine: f.elements.cuisine.value, minutes: Number(f.elements.minutes.value) || 45,
+    note: f.elements.note.value.trim() || undefined, ingredients };
+  if (editingId) {
+    const r = recipeById(editingId);
+    Object.assign(r, data);
+  } else {
+    state.recipes.push(Object.assign({ id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now().toString(36) }, data));
+  }
+  save(); $('#editor').close(); render();
+});
 
 // ---------- shopping ----------
 function shoppingItems() {
