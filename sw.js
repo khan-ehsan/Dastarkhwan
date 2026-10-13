@@ -1,7 +1,7 @@
 // Service worker: keeps the app working offline (for example in the supermarket with weak signal).
 // Always asks the server for the newest version first, and falls back to the saved copy when offline,
 // so app updates show up without clearing the browser's data.
-const CACHE = 'dastarkhwan-v5';
+const CACHE = 'dastarkhwan-v6';
 const FILES = ['./', 'index.html', 'style.css', 'app.js', 'data.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {

@@ -78,7 +78,19 @@ const recipeById = (id) => state.recipes.find((r) => r.id === id);
 const shopName = (id) => (SHOPS.find((s) => s.id === id) || { name: id }).name;
 const kr = (n) => `≈ ${Math.round(n).toLocaleString('da-DK')} kr`;
 const members = () => (state.settings.members.length ? state.settings.members : []);
-const dayInfo = (key) => state.days[key] || (state.days[key] = { sides: [], cook: '', away: [], guests: 0 });
+const dayInfo = (key) => state.days[key] || (state.days[key] = { sides: [], cooks: [], away: [], guests: 0 });
+// A chef and any number of helpers. Older saved days had "cook" or "cooks".
+function crew(info) {
+  if (!info) return { chef: '', helpers: [] };
+  if (info.chef !== undefined || info.helpers) return { chef: info.chef || '', helpers: info.helpers || [] };
+  const c = info.cooks || (info.cook ? [info.cook] : []);
+  return { chef: c[0] || '', helpers: c.slice(1) };
+}
+function cookText(info) {
+  const { chef, helpers } = crew(info);
+  if (!chef && !helpers.length) return '';
+  return [chef ? `👩‍🍳 ${chef}` : '', helpers.length ? `🤝 ${helpers.join(' & ')}` : ''].filter(Boolean).join(' · ');
+}
 let toastTimer;
 function toast(msg) { const n = $('#toast'); n.textContent = msg; n.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => n.classList.remove('show'), 2200); }
 
@@ -142,7 +154,7 @@ function tonightCard() {
   card.append(el('div', { class: 'tonight-row' }, picture(r, 'tonight-pic'),
     el('div', {},
       el('h2', {}, r.name),
-      el('p', { class: 'meta' }, `${r.minutes} min · ${headcount(key)} eating`, info.cook ? ` · 👩‍🍳 ${info.cook}` : ''),
+      el('p', { class: 'meta' }, `${r.minutes} min · ${headcount(key)} eating`, cookText(info) ? ` · ${cookText(info)}` : ''),
       (info.sides || []).length ? el('p', { class: 'meta' }, '+ ' + info.sides.map((s) => (recipeById(s) || {}).name).filter(Boolean).join(', ')) : null)));
   return card;
 }
@@ -184,7 +196,7 @@ function renderWeek() {
         (info.sides || []).length ? el('small', { class: 'sides-line' }, '+ ' + info.sides.map((s) => (recipeById(s) || {}).name).filter(Boolean).join(', ')) : null,
         el('span', { class: 'chips-line' },
           r ? el('span', { class: 'tag' }, r.cuisine) : null,
-          info.cook ? el('span', { class: 'pill' }, `👩‍🍳 ${info.cook}`) : null,
+          cookText(info) ? el('span', { class: 'pill' }, cookText(info)) : null,
           away ? el('span', { class: 'pill' }, `🚶 ${away} out`) : null,
           guests ? el('span', { class: 'pill' }, `➕ ${guests} guest${guests > 1 ? 's' : ''}`) : null,
           repeat ? el('span', { class: 'warn' }, 'same cuisine twice') : null)),
@@ -253,13 +265,24 @@ function renderDay() {
 
   // People
   if (!members().length) {
-    body.append(el('p', { class: 'hint' }, 'Add your family\'s names in ⚙︎ Settings to choose who is cooking and who is home.'));
+    body.append(el('div', { class: 'card settings-hint' },
+      el('p', { class: 'hint' }, 'Add your family\'s names to choose who is cooking and who is home.'),
+      el('button', { class: 'small', onclick: () => { $('#dayDlg').close(); openSettings(); } }, '⚙︎ Open Settings')));
   } else {
     if (r) {
+      const setCrew = (fn) => set(() => { const c = crew(info); fn(c); delete info.cook; delete info.cooks; info.chef = c.chef; info.helpers = c.helpers; });
+      const c = crew(info);
       body.append(el('h3', {}, t('cooking')));
+      body.append(el('p', { class: 'hint' }, 'Chef'));
       body.append(el('div', { class: 'chips' }, members().map((m) => el('button', {
-        class: 'chip' + (info.cook === m ? ' on' : ''), onclick: () => set(() => { info.cook = info.cook === m ? '' : m; }),
-      }, m))));
+        class: 'chip' + (c.chef === m ? ' on' : ''),
+        onclick: () => setCrew((x) => { x.chef = x.chef === m ? '' : m; x.helpers = x.helpers.filter((h) => h !== x.chef); }),
+      }, '👩‍🍳 ' + m))));
+      body.append(el('p', { class: 'hint' }, 'Helpers (tap one or more)'));
+      body.append(el('div', { class: 'chips' }, members().filter((m) => m !== c.chef).map((m) => el('button', {
+        class: 'chip' + (c.helpers.includes(m) ? ' on' : ''),
+        onclick: () => setCrew((x) => { x.helpers = x.helpers.includes(m) ? x.helpers.filter((h) => h !== m) : [...x.helpers, m]; }),
+      }, '🤝 ' + m))));
     }
     body.append(el('h3', {}, t('home')));
     body.append(el('div', { class: 'chips' }, members().map((m) => el('button', {
@@ -538,12 +561,13 @@ function renderShop() {
 }
 
 // ---------- settings ----------
-$('#openSettings').addEventListener('click', () => {
+function openSettings() {
   const f = $('#settingsForm'), s = state.settings;
   f.elements.family.value = s.family; f.elements.members.value = s.members.join('\n');
   f.elements.base.value = s.base; f.elements.lang.value = s.lang; f.elements.theme.value = s.theme;
   $('#settingsDlg').showModal();
-});
+}
+$('#openSettings').addEventListener('click', openSettings);
 $('#settingsCancel').addEventListener('click', () => $('#settingsDlg').close());
 $('#settingsForm').addEventListener('submit', (e) => {
   e.preventDefault();
