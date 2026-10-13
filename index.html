@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#7a2e1d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Dastarkhwan">
+  <title>Dastarkhwan</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Dastarkhwan</h1>
+    <p class="sub" id="weekLabel"></p>
+  </header>
+
+  <main>
+    <section id="tab-week" class="tab active" aria-label="This week"></section>
+    <section id="tab-recipes" class="tab" aria-label="Recipes"></section>
+    <section id="tab-shop" class="tab" aria-label="Shopping"></section>
+  </main>
+
+  <nav class="tabs" aria-label="Main">
+    <button data-tab="week" class="on">🍽️<span>This week</span></button>
+    <button data-tab="recipes">📖<span>Recipes</span></button>
+    <button data-tab="shop">🛒<span>Shopping</span></button>
+  </nav>
+
+  <dialog id="picker">
+    <form method="dialog">
+      <h2 id="pickerTitle">Pick a dinner</h2>
+      <div id="pickerList" class="picker-list"></div>
+      <menu><button value="clear" class="ghost">Clear day</button><button value="cancel">Close</button></menu>
+    </form>
+  </dialog>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
