@@ -10,50 +10,93 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="top">
-    <h1>Dastarkhwan</h1>
+    <div class="top-row">
+      <div>
+        <p class="hello" id="hello"></p>
+        <h1>Dastarkhwan</h1>
+      </div>
+      <button id="openSettings" class="icon-btn" aria-label="Settings">⚙︎</button>
+    </div>
     <p class="sub" id="weekLabel"></p>
   </header>
 
   <main>
-    <section id="tab-week" class="tab active" aria-label="This week"></section>
-    <section id="tab-recipes" class="tab" aria-label="Recipes"></section>
-    <section id="tab-shop" class="tab" aria-label="Shopping"></section>
+    <section id="tab-week" class="tab active"></section>
+    <section id="tab-recipes" class="tab"></section>
+    <section id="tab-shop" class="tab"></section>
   </main>
 
   <nav class="tabs" aria-label="Main">
-    <button data-tab="week" class="on">🍽️<span>This week</span></button>
-    <button data-tab="recipes">📖<span>Recipes</span></button>
-    <button data-tab="shop">🛒<span>Shopping</span></button>
+    <button data-tab="week" class="on">🍽️<span data-w="week">This week</span></button>
+    <button data-tab="recipes">📖<span data-w="recipes">Recipes</span></button>
+    <button data-tab="shop">🛒<span data-w="shop">Shopping</span></button>
   </nav>
 
-  <dialog id="picker">
-    <form method="dialog">
-      <h2 id="pickerTitle">Pick a dinner</h2>
-      <div id="pickerList" class="picker-list"></div>
-      <menu><button value="clear" class="ghost">Clear day</button><button value="cancel">Close</button></menu>
-    </form>
-  </dialog>
+  <!-- Day planner: dinner, sides, cook, who is home -->
+  <dialog id="dayDlg"><div class="dlg-body" id="dayBody"></div></dialog>
 
+  <!-- Add or edit a dish -->
   <dialog id="editor">
     <form id="editorForm">
       <h2 id="editorTitle">Add new dish</h2>
       <label>Dish name <input name="name" required placeholder="e.g. Chicken pulao"></label>
-      <div class="two">
+      <div class="three">
+        <label>Type <select name="type"><option value="main">Main</option><option value="side">Side</option><option value="dessert">Dessert</option></select></label>
         <label>Cuisine <select name="cuisine"></select></label>
         <label>Minutes <input name="minutes" type="number" min="5" value="45"></label>
       </div>
-      <h3>Ingredients</h3>
-      <p class="hint">One row per ingredient. Tick <b>Pantry</b> for things usually at home (rice, spices, oil); they only go on the shopping list when marked as running low.</p>
+      <div class="photo-pick">
+        <div id="photoPreview" class="thumb"></div>
+        <div>
+          <label class="file-btn">📷 Take or choose photo <input type="file" id="photoFile" accept="image/*" hidden></label>
+          <button type="button" id="photoRemove" class="ghost small">Remove photo</button>
+        </div>
+      </div>
+      <h3>Ingredients <small>(for 4 people)</small></h3>
+      <p class="hint">One row per ingredient. Tick <b>Pantry</b> for things usually at home (rice, spices, oil). Price is a rough amount in kr, for the weekly cost estimate.</p>
       <div id="ingRows"></div>
       <button type="button" id="addIng" class="ghost">+ Add ingredient</button>
       <label>Note (optional) <input name="note" placeholder="e.g. Use stock instead of wine"></label>
       <menu><button type="button" id="editorCancel" class="ghost">Cancel</button><button type="submit">Save dish</button></menu>
     </form>
   </dialog>
+
+  <!-- New special menu -->
+  <dialog id="menuDlg">
+    <form id="menuForm">
+      <h2>New special menu</h2>
+      <label>Name <input name="name" required placeholder="e.g. Sunday family lunch"></label>
+      <label>Icon <input name="icon" maxlength="2" value="⭐"></label>
+      <label>Main dish <select name="main" id="menuMain"></select></label>
+      <p class="hint">Sides and dessert</p>
+      <div id="menuSides" class="chips"></div>
+      <menu><button type="button" id="menuCancel" class="ghost">Cancel</button><button type="submit">Save menu</button></menu>
+    </form>
+  </dialog>
+
+  <!-- Settings -->
+  <dialog id="settingsDlg">
+    <form id="settingsForm">
+      <h2 data-w="settings">Settings</h2>
+      <p class="hint">Saved only on this phone. Names are used for "who's cooking" and "who's home".</p>
+      <label>Family name, for the greeting <input name="family" placeholder="e.g. Khan family"></label>
+      <label>Family members, one per line <textarea name="members" rows="4" placeholder="Name&#10;Name&#10;Name&#10;Name"></textarea></label>
+      <div class="three">
+        <label>Usual servings <input name="base" type="number" min="1" value="4"></label>
+        <label>Language <select name="lang"><option value="en">English</option><option value="ur">اردو Urdu</option></select></label>
+        <label>Theme <select name="theme"><option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+      </div>
+      <menu><button type="button" id="settingsCancel" class="ghost">Cancel</button><button type="submit">Save</button></menu>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status"></div>
 
   <script src="data.js"></script>
   <script src="app.js"></script>
